@@ -4,17 +4,18 @@
 {% block content %}
   <h1>Tasks</h1>
 
+  <!-- Form to add a new task -->
   <form method="POST" action="{{ url_for('add_task') }}">
     <input type="text" name="task_name" placeholder="Enter a new task" required>
     <button type="submit">Add Task</button>
   </form>
 
+  <!-- Display each task with a remove button -->
   <ul>
-    {% for idx, task in enumerate(tasks) %}
+    {% for task in tasks %}
       <li>
         {{ task }}
-        <!-- Link or form to remove the task -->
-        <form method="POST" action="{{ url_for('remove_task', task_index=idx) }}" style="display:inline;">
+        <form method="POST" action="{{ url_for('remove_task', task_index=loop.index0) }}" style="display:inline;">
           <button type="submit">Remove</button>
         </form>
       </li>

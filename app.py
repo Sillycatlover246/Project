@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
+# In-memory task list (fucking stupid)
 tasks = []
 
 @app.route("/", methods=["GET"])
@@ -22,5 +23,5 @@ def remove_task(task_index):
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    # Important to specify host="0.0.0.0" for Docker
+    # '0.0.0.0' is important if you're running in Docker
     app.run(host="0.0.0.0", port=5000, debug=True)
