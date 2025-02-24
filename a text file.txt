@@ -3,3 +3,14 @@ in powershell .\venv\Scripts\activate
 pip install flask
 python app.py to run locally
 pip freeze > requirements.txt
+first commit & push to Project repo
+creating and updating dockerfile
+creating and updating .dockerignore
+building image docker build -t devproject:latest .
+running container docker run -dp 5000:5000 devproject:latest
+not showing on http://localhost:5000
+update app.run host&port
+rebuilding image
+running container again
+error cause i left the container running, deleting it and running again
+working
