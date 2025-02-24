@@ -7,4 +7,4 @@ def home(): # just a function called home
     return render_template("index.html") # pretty much looks for the index.html file in the templates folder
 
 if __name__ == "__main__":
-    app.run(debug=True) # just starts the flask dev server in debug mode
+    app.run(host="0.0.0.0", port=5000, debug=True) # just starts the flask dev server in debug mode
