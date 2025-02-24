@@ -17,3 +17,11 @@ working
 tagging image docker tag devproject:latest sillycatlover246/devproject:latest
 pushing image docker push sillycatlover246/devproject:latest
 very nice
+adding a base.html & static folder for css
+updating index & app
+commit & push
+rebuilding image & running container
+not working, too bad 
+fixing rebuilding and running
+crappy checklist is working
+tagging & pushing updated image
