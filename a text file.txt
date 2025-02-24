@@ -1,0 +1,5 @@
+creating a venv folder in project root (virtual envoirment for local testing). python -m venv venv
+in powershell .\venv\Scripts\activate
+pip install flask
+python app.py to run locally
+pip freeze > requirements.txt
