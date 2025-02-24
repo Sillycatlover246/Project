@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>High Effort Page</title>
-</head>
-<body>
-    <h1>Very high effort html page</h1>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}My Checklist{% endblock %}
+
+{% block content %}
+  <h1>Tasks</h1>
+
+  <form method="POST" action="{{ url_for('add_task') }}">
+    <input type="text" name="task_name" placeholder="Enter a new task" required>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <ul>
+    {% for idx, task in enumerate(tasks) %}
+      <li>
+        {{ task }}
+        <!-- Link or form to remove the task -->
+        <form method="POST" action="{{ url_for('remove_task', task_index=idx) }}" style="display:inline;">
+          <button type="submit">Remove</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
