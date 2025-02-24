@@ -14,3 +14,6 @@ rebuilding image
 running container again
 error cause i left the container running, deleting it and running again
 working
+tagging image docker tag devproject:latest sillycatlover246/devproject:latest
+pushing image docker push sillycatlover246/devproject:latest
+very nice
