@@ -10,24 +10,21 @@
     <button type="submit">Add Task</button>
   </form>
 
-  <!-- List tasks -->
   <ul>
     {% for task in tasks %}
       <li>
-        <!-- Use a conditional class if the task is completed -->
+        <!-- If completed is True, strike through the text -->
         <span class="{% if task.completed %}completed{% endif %}">
-          {{ task.task_name }}
+          {{ task.name }}
         </span>
 
-        <!-- Toggle completion -->
-        <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" style="display:inline;">
-          <button type="submit">
-            {% if task.completed %}Unmark{% else %}Complete{% endif %}
-          </button>
+        <!-- Button to toggle completion, use loop.index0 -->
+        <form method="POST" action="{{ url_for('toggle_task', task_index=loop.index0) }}" style="display:inline;">
+          <button type="submit">{% if task.completed %}Unmark{% else %}Complete{% endif %}</button>
         </form>
 
-        <!-- Remove task -->
-        <form method="POST" action="{{ url_for('remove_task', task_id=task.id) }}" style="display:inline;">
+        <!-- Button to remove task, use loop.index0 as well -->
+        <form method="POST" action="{{ url_for('remove_task', task_index=loop.index0) }}" style="display:inline;">
           <button type="submit">Remove</button>
         </form>
       </li>

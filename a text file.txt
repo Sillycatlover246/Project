@@ -41,3 +41,7 @@ pip freeze
 pymysql fucking needs cryptography?????
 pip freeze
 dident specify root user in databaseurl secret now i feel stupid remember to change it later in google cloud secrets
+realize its not my fucking job to code a working python app right now
+revering mostly everything back to basics 
+dont code when tired
+maybe add volumes later for consistent data? not sure if i can even 
