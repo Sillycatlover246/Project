@@ -2,14 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>{% block title %}Flask Checklist{% endblock %}</title>
+  <title>{% block title %}Task Tracker{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-
   <header>
     <nav>
-      <h2>My Checklist App</h2>
+      <h2>Task Tracker</h2>
+      <ul>
+        {% if session.user_id %}
+          <li><a href="{{ url_for('index') }}">My Tasks</a></li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+        {% endif %}
+      </ul>
     </nav>
   </header>
 
@@ -18,8 +26,7 @@
   </main>
 
   <footer>
-    <p>© 2025 MyDevProject</p>
+    <p>© 2025 DevProject</p>
   </footer>
-
 </body>
 </html>

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}My Checklist{% endblock %}
+{% block title %}My Tasks{% endblock %}
 
 {% block content %}
-  <h1>Tasks</h1>
+  <h1>My Tasks</h1>
 
   <!-- Form to add a new task -->
   <form method="POST" action="{{ url_for('add_task') }}">
@@ -10,12 +10,24 @@
     <button type="submit">Add Task</button>
   </form>
 
-  <!-- Display each task with a remove button -->
+  <!-- List tasks -->
   <ul>
     {% for task in tasks %}
       <li>
-        {{ task }}
-        <form method="POST" action="{{ url_for('remove_task', task_index=loop.index0) }}" style="display:inline;">
+        <!-- Use a conditional class if the task is completed -->
+        <span class="{% if task.completed %}completed{% endif %}">
+          {{ task.task_name }}
+        </span>
+
+        <!-- Toggle completion -->
+        <form method="POST" action="{{ url_for('toggle_task', task_id=task.id) }}" style="display:inline;">
+          <button type="submit">
+            {% if task.completed %}Unmark{% else %}Complete{% endif %}
+          </button>
+        </form>
+
+        <!-- Remove task -->
+        <form method="POST" action="{{ url_for('remove_task', task_id=task.id) }}" style="display:inline;">
           <button type="submit">Remove</button>
         </form>
       </li>

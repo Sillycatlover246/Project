@@ -25,3 +25,19 @@ not working, too bad
 fixing rebuilding and running
 crappy checklist is working
 tagging & pushing updated image
+doing more updates to the web app, currently creating a user database in google cloud
+connecting mysql -h public-ip -u root -p (remember to change this later and change networking 0.0.0.0/0 bad)
+CREATE DATABASE devproject;     
+CREATE TABLE users & tasks (remember DESCRIBE exists)
+added a new git+google cloud secret for the mysql connection (DATABASE_URL)
+also created a .env file cause why not
+updating FLASK_SECRET_KEY
+new html files (login/register)
+pip install flask_sqlalchemy
+pip freeze > requirements.txt
+a bunch of non functioning code updates
+forgor to install pymysql
+pip freeze
+pymysql fucking needs cryptography?????
+pip freeze
+dident specify root user in databaseurl secret now i feel stupid remember to change it later in google cloud secrets
