@@ -1,6 +1,7 @@
 variable "project_id" {
   type        = string
   description = "GCP project ID"
+  default = "devproject-451919"
 }
 
 variable "region" {
@@ -14,7 +15,6 @@ variable "gcp_credentials_file" {
   description = "Path to the GCP service account JSON key"
   default     = "gcp.json"
 }
-
 
 variable "cluster_name" {
   type        = string
