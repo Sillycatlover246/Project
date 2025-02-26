@@ -45,3 +45,4 @@ realize its not my fucking job to code a working python app right now
 revering mostly everything back to basics 
 dont code when tired
 maybe add volumes later for consistent data? not sure if i can even 
+going over all the code to make sure im using secrets and not actual sensitive info lol

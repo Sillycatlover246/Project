@@ -1,7 +1,8 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = "change_me_in_production"  # Must have a secret key to use sessions
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 @app.route("/")
 def index():
