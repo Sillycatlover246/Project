@@ -5,11 +5,9 @@ resource "google_container_cluster" "primary" {
   # This is a "regional" cluster if location is region; or use "zone" if you want a zonal cluster
   initial_node_count = 1
   remove_default_node_pool = true
-  min_master_version       = "1.25"  # Example, pinned version
 
   network    = "default"
   subnetwork = "default"
-
   # By default, the cluster is public. You can lock it down or use private clusters if you prefer
 }
 
