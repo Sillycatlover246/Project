@@ -35,7 +35,7 @@ jobs:
 
   deploy_infrastructure:
     needs: build_and_push  # or run in parallel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           cd terraform
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
+          printf '%s' "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json 
           terraform init
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
