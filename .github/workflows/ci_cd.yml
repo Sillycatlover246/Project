@@ -48,7 +48,6 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           cd terraform
-          printf '%s' "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json 
           terraform init
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan

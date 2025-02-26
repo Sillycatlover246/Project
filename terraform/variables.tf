@@ -10,11 +10,11 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "gcp_credentials_file" {
-  type        = string
-  description = "Path to the GCP service account JSON key"
-  default     = "gcp.json"
-}
+#variable "gcp_credentials_file" {
+#  type        = string
+#  description = "Path to the GCP service account JSON key"
+#  default     = "gcp.json"
+#}
 
 variable "cluster_name" {
   type        = string
