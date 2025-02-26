@@ -2,9 +2,11 @@ version: "3.8"
 services:
   web:
     image: sillycatlover246/devproject:latest
-    # If you want to build locally instead of pulling from DockerHub, you can replace the above with:
-    # build: .
+
     ports:
       - "5000:5000"
-    # For your session-based app, we don't have environment variables or volumes to worry about.
-    # But if you did, you'd define them here.
+
+    environment:
+      - FLASK_SECRET_KEY
+      - DATABASE_URL
+
