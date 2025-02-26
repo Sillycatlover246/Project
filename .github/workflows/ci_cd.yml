@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD
 
 on:
   push:
@@ -7,41 +7,70 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_test_and_deploy:
+  build_and_push:
     runs-on: ubuntu-latest
-
     steps:
-    # Step 1: Check out the code
-    - name: Check out repo
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    # Step 2: Set up Python for unit tests (if you have them)
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    # Step 3: Install Dependencies (Flask, etc.)
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    # Step 4: Run tests (if you have a test suite)
-    - name: Run tests
-      run: |
-        # Example: If you have a 'tests' folder
-        # For now, if no tests, just echo a message
-        echo "No tests found; skipping test step..."
+      - name: Run tests
+        run: |
+          echo "No tests yet..."
 
-    # Step 5: Log in to DockerHub using secrets
-    - name: Log in to DockerHub
-      run: echo "${{ secrets.DOCKER_PASSWORD_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-    # Step 6: Build Docker image
-    - name: Build the Docker image
-      run: |
-        docker build -t sillycatlover246/devproject:latest .
+      - name: Build & push image
+        run: |
+          docker build -t sillycatlover246/devproject:latest .
+          docker push sillycatlover246/devproject:latest
 
-    # Step 7: Push Docker image to DockerHub
-    - name: Push Docker image
-      run: |
-        docker push sillycatlover246/devproject:latest
+  deploy_infrastructure:
+    needs: build_and_push  # or run in parallel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform init & apply
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          cd terraform
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+  deploy_app:
+    needs: deploy_infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Auth to GCP
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
+          gcloud auth activate-service-account --key-file=gcp.json
+          gcloud container clusters get-credentials devproject-cluster --region=us-central1 --project=devproject-451919
+
+      - name: Helm upgrade/install
+        run: |
+          helm upgrade --install devproject ./helm/devproject \
+            --set image.repository=sillycatlover246/devproject \
+            --set image.tag=latest \
+            --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}

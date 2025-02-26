@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: sillycatlover246/devproject
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 5000
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  FLASK_SECRET_KEY: "myHelmSecretKey"  # Overwrite in real usage or use Kubernetes Secrets

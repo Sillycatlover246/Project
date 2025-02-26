@@ -46,3 +46,10 @@ revering mostly everything back to basics
 dont code when tired
 maybe add volumes later for consistent data? not sure if i can even 
 going over all the code to make sure im using secrets and not actual sensitive info lol
+enabling k8s engine/resource manager/cloud dns api's in google cloud
+creating a service account terraform-sa
+making le epic key 
+storing entire json file as secret
+creating tf folder/files
+also helm stuff hopefully ill integrate them both into cicd and itll just work <-(clueless)
+k8s secret no workie
