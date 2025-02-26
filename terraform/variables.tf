@@ -12,7 +12,9 @@ variable "region" {
 variable "gcp_credentials_file" {
   type        = string
   description = "Path to the GCP service account JSON key"
+  default     = "gcp.json"
 }
+
 
 variable "cluster_name" {
   type        = string
