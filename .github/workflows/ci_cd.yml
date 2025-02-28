@@ -50,14 +50,17 @@ jobs:
         cd terraform
         terraform init -upgrade
 
+        # Check if the cluster is already in state; if not, import it.
         terraform state list google_container_cluster.primary || \
           terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
 
+        # Similarly, import the node pool if not already in state.
         terraform state list google_container_node_pool.primary_nodes || \
           terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
 
         terraform plan -out=tfplan
         terraform apply -auto-approve tfplan
+
 
   deploy_app:
     needs: deploy_infrastructure
