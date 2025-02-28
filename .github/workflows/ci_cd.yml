@@ -49,8 +49,8 @@ jobs:
         run: |
           cd terraform  
           terraform init -upgrade
-          terrafrom import -input=false google_container_cluster.primary devproject-cluster || true
-          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/locations/us-central1/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
+          terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
+          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
           
