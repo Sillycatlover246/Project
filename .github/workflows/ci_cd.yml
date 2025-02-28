@@ -65,17 +65,17 @@ jobs:
 
     - name: Terraform import cluster
       run: |
-        cd terraform
-        # Write credentials to a file for Terraform
-        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > /tmp/gcp-key.json
-        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
-        
-        # Try the import with explicit project ID
-        terraform import \
-          -var="project_id=devproject-451919" \
-          google_container_cluster.primary \
-          projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster \
-          || echo "Import failed, but continuing..."
+          cd terraform
+          # Write credentials to a file for Terraform - fix JSON formatting issues
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
+          
+          # Try the import with explicit project ID
+          terraform import \
+            -var="project_id=devproject-451919" \
+            google_container_cluster.primary \
+            projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster \
+            || echo "Import failed, but continuing..."
           
     - name: Terraform import node pool
       run: |
