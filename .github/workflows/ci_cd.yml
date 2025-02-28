@@ -43,21 +43,29 @@ jobs:
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
 
-    - name: Terraform init, import, and apply
+    - name: Auth to GCP 
+      env:
+        SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      run: |
+        echo "$SERVICE_ACCOUNT_JSON" > gcp.json
+        gcloud auth activate-service-account --key-file=gcp.json
+        gcloud config set project devproject-451919
+
+    - name: Terraform init and import
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       run: |
         cd terraform
         terraform init -upgrade
-
-        # Check if the cluster is already in state; if not, import it.
+        
+        # Check if resources are already in state before trying to import
         terraform state list google_container_cluster.primary || \
-          terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
-
-        # Similarly, import the node pool if not already in state.
+          (terraform import google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster && echo "Imported cluster successfully")
+        
         terraform state list google_container_node_pool.primary_nodes || \
-          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
-
+          (terraform import google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool && echo "Imported node pool successfully")
+        
+        # Run plan and apply separately
         terraform plan -out=tfplan
         terraform apply -auto-approve tfplan
 
