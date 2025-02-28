@@ -1,9 +1,8 @@
 terraform {
   backend "gcs" {
-    bucket = "devproject-terraform-state" 
+    bucket = "devproject-terraform-state"  
     prefix = "terraform/state"
   }
-
   required_version = ">= 1.3.0"
   required_providers {
     google = {
@@ -18,11 +17,13 @@ terraform {
 }
 
 provider "google" {
-  project     = var.project_id
-  region      = var.region
+  project = var.project_id
+  region  = var.region
+  zone    = "us-central1-a"   
 }
 
 provider "google-beta" {
-  project     = var.project_id
-  region      = var.region
+  project = var.project_id
+  region  = var.region
+  zone    = "us-central1-a"   
 }
