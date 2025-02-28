@@ -34,7 +34,7 @@ jobs:
           docker push sillycatlover246/devproject:latest
 
   deploy_infrastructure:
-    needs: build_and_push  # or run in parallel
+    needs: build_and_push
     runs-on: ubuntu-latest 
     steps:
       - name: Check out code
@@ -43,15 +43,17 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform init & apply
+      - name: Terraform init import apply
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
-          cd terraform
-          terraform init
+          cd terraform  
+          terraform init -upgrade
+          terrafrom import -input=false google_container_cluster.primary devproject-cluster || true
+          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/locations/us-central1/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-
+          
   deploy_app:
     needs: deploy_infrastructure
     runs-on: ubuntu-latest
