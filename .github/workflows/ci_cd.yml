@@ -37,27 +37,27 @@ jobs:
     needs: build_and_push
     runs-on: ubuntu-latest 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v3
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform init, import, and apply
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-        run: |
-          cd terraform
-          terraform init -upgrade
+    - name: Terraform init, import, and apply
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      run: |
+        cd terraform
+        terraform init -upgrade
 
-          terraform state list google_container_cluster.primary || \
-            terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster
+        terraform state list google_container_cluster.primary || \
+          terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
 
-          terraform state list google_container_node_pool.primary_nodes || \
-            terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool
+        terraform state list google_container_node_pool.primary_nodes || \
+          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
 
-          terraform plan -out=tfplan
-          terraform apply -auto-approve tfplan
+        terraform plan -out=tfplan
+        terraform apply -auto-approve tfplan
 
   deploy_app:
     needs: deploy_infrastructure
