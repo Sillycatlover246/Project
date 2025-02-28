@@ -43,14 +43,19 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform init import apply
+      - name: Terraform init, import, and apply
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           cd terraform
           terraform init -upgrade
-          terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
-          terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
+
+          terraform state list google_container_cluster.primary || \
+            terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster
+
+          terraform state list google_container_node_pool.primary_nodes || \
+            terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool
+
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
 
@@ -68,9 +73,10 @@ jobs:
         env:
           SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
-          printf "%s" "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
+          # Use printf to write the JSON exactly as-is
+          printf '%s' "$SERVICE_ACCOUNT_JSON" > gcp.json
           gcloud auth activate-service-account --key-file=gcp.json
-          gcloud container clusters get-credentials devproject-cluster --region=us-central1 --project=devproject-451919
+          gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
 
       - name: Helm upgrade/install
         run: |
