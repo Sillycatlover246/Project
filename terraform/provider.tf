@@ -1,4 +1,9 @@
 terraform {
+  backend "gcs" {
+    bucket = "devproject-terraform-state" 
+    prefix = "terraform/state"
+  }
+
   required_version = ">= 1.3.0"
   required_providers {
     google = {

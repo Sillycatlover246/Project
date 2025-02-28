@@ -47,13 +47,13 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
-          cd terraform  
+          cd terraform
           terraform init -upgrade
           terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
           terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-          
+
   deploy_app:
     needs: deploy_infrastructure
     runs-on: ubuntu-latest
