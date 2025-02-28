@@ -63,8 +63,10 @@ jobs:
         uses: azure/setup-helm@v3
 
       - name: Auth to GCP
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
+          printf "%s" "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
           gcloud auth activate-service-account --key-file=gcp.json
           gcloud container clusters get-credentials devproject-cluster --region=us-central1 --project=devproject-451919
 
