@@ -22,8 +22,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests
-        run: |
-          echo "No tests yet..."
+        run: echo "No tests yet..."
 
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
@@ -37,68 +36,29 @@ jobs:
     needs: build_and_push
     runs-on: ubuntu-latest 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-    
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-        
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: devproject-451919
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Verify gcloud auth
-      run: |
-        gcloud auth list
-        gcloud container clusters list --zone=us-central1-a
-        
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v2
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
 
-    - name: Terraform init
-      run: |
-        cd terraform
-        terraform init -upgrade
-
-    - name: Terraform import cluster
-      run: |
+      - name: Terraform init, import, and apply
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
           cd terraform
-          # Write credentials to a file for Terraform - fix JSON formatting issues
-          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
-          
-          # Try the import with explicit project ID
-          terraform import \
-            -var="project_id=devproject-451919" \
-            google_container_cluster.primary \
-            projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster \
-            || echo "Import failed, but continuing..."
-          
-    - name: Terraform import node pool
-      run: |
-        cd terraform
-        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
-        
-        terraform import \
-          -var="project_id=devproject-451919" \
-          google_container_node_pool.primary_nodes \
-          projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool \
-          || echo "Import failed, but continuing..."
-    
-    - name: Terraform plan
-      run: |
-        cd terraform
-        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
-        terraform plan -out=tfplan
+          terraform init -upgrade
 
-    - name: Terraform apply
-      run: |
-        cd terraform
-        export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
-        terraform apply -auto-approve tfplan || echo "Apply may have partially succeeded"
+          # Import the existing cluster if it's not in state already.
+          terraform state list google_container_cluster.primary || \
+            terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
+
+          # Import the existing node pool if it's not in state already.
+          terraform state list google_container_node_pool.primary_nodes || \
+            terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
+
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
 
   deploy_app:
     needs: deploy_infrastructure
@@ -109,19 +69,14 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v3
-        
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: devproject-451919
 
-      - name: Get cluster credentials
+      - name: Auth to GCP
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
+          # Use printf to write the JSON exactly as stored
+          printf '%s' "$SERVICE_ACCOUNT_JSON" > gcp.json
+          gcloud auth activate-service-account --key-file=gcp.json
           gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
 
       - name: Helm upgrade/install

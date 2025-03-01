@@ -1,35 +1,29 @@
 variable "project_id" {
-  type        = string
   description = "GCP project ID"
-  default = "devproject-451919"
+  type        = string
+  default     = "devproject-451919"
 }
 
 variable "region" {
-  type        = string
   description = "Region for GKE (e.g., us-central1)"
+  type        = string
   default     = "us-central1"
 }
 
-#variable "gcp_credentials_file" {
-#  type        = string
-#  description = "Path to the GCP service account JSON key"
-#  default     = "gcp.json"
-#}
-
 variable "cluster_name" {
+  description = "Name of the GKE cluster"
   type        = string
   default     = "devproject-cluster"
-  description = "Name of the GKE cluster"
 }
 
 variable "node_count" {
+  description = "Number of nodes in the default node pool"
   type        = number
   default     = 2
-  description = "Number of nodes in the default node pool"
 }
 
 variable "node_machine_type" {
+  description = "Machine type for each node"
   type        = string
   default     = "e2-medium"
-  description = "Machine type for each node"
 }

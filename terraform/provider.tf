@@ -19,11 +19,11 @@ terraform {
 provider "google" {
   project = var.project_id
   region  = var.region
-  zone    = "us-central1-a"   
+  zone    = "us-central1-a"  
 }
 
 provider "google-beta" {
   project = var.project_id
   region  = var.region
-  zone    = "us-central1-a"   
+  zone    = "us-central1-a"
 }
