@@ -50,7 +50,7 @@ jobs:
           terraform init
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-          
+
   deploy_app:
     needs: deploy_infrastructure
     runs-on: ubuntu-latest
@@ -63,11 +63,12 @@ jobs:
 
       - name: Auth to GCP
         env:
-          SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          SERVICE_ACCOUNT_KEY_BASE64: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
         run: |
-          printf "%s" "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp.json
+          echo "$SERVICE_ACCOUNT_KEY_BASE64" | base64 -d > gcp.json
           gcloud auth activate-service-account --key-file=gcp.json
-          gcloud container clusters get-credentials devproject-cluster --region=us-central1 --project=devproject-451919
+          gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
+      
       - name: Helm upgrade/install
         run: |
           helm upgrade --install devproject ./helm/devproject \
