@@ -1,0 +1,24 @@
+name: Teardown Infrastructure
+
+# This workflow is manually triggered. You can also add a schedule if desired.
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy_infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform destroy
+        env:
+          # Provide the full service account JSON via the environment variable.
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          cd terraform
+          terraform init -upgrade
+          terraform destroy -auto-approve
