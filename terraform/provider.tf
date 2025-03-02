@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "devproject-terraform-state"  
+    bucket = "devproject-terraform-state"  # Replace with your bucket name
     prefix = "terraform/state"
   }
   required_version = ">= 1.3.0"
@@ -19,7 +19,7 @@ terraform {
 provider "google" {
   project = var.project_id
   region  = var.region
-  zone    = "us-central1-a"  
+  zone    = "us-central1-a"   # Explicitly specify the zone for zonal resources
 }
 
 provider "google-beta" {

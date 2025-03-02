@@ -4,6 +4,6 @@ output "cluster_name" {
 }
 
 output "kubeconfig" {
-  description = "Endpoint of the cluster (to be used for generating kubeconfig)"
+  description = "Endpoint of the cluster (to help generate kubeconfig)"
   value       = google_container_cluster.primary.endpoint
 }

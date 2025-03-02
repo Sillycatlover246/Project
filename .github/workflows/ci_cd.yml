@@ -34,7 +34,7 @@ jobs:
 
   deploy_infrastructure:
     needs: build_and_push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -48,13 +48,10 @@ jobs:
         run: |
           cd terraform
           terraform init -upgrade
-          
           terraform state list google_container_cluster.primary || \
             terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
-          
           terraform state list google_container_node_pool.primary_nodes || \
             terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
-          
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
 
