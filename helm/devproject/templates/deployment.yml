@@ -15,11 +15,11 @@ spec:
         app: {{ .Chart.Name }}
     spec:
       containers:
-        - name: devproject-flask
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
-          ports:
-            - containerPort: 5000
-          env:
-            - name: FLASK_SECRET_KEY
-              value: "{{ .Values.env.FLASK_SECRET_KEY | quote }}"
+      - name: devproject-flask
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_SECRET_KEY
+          value: {{ default "myHelmSecretKey" .Values.env.FLASK_SECRET_KEY | quote }}

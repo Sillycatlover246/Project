@@ -18,4 +18,4 @@ resources:
     memory: 128Mi
 
 env:
-  FLASK_SECRET_KEY: "myHelmSecretKey"  # Overwrite in real usage or use Kubernetes Secrets
+  FLASK_SECRET_KEY: "myHelmSecretKey"
