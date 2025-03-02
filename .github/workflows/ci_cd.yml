@@ -55,10 +55,10 @@ jobs:
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
 
-deploy_app:
-  needs: deploy_infrastructure
-  runs-on: ubuntu-latest
-  steps:
+  deploy_app:
+    needs: deploy_infrastructure
+    runs-on: ubuntu-latest
+    steps:
     - name: Check out code
       uses: actions/checkout@v3
 
