@@ -82,3 +82,4 @@ jobs:
             --set image.repository=sillycatlover246/devproject \
             --set image.tag=latest \
             --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+#testrunsyippieeeee
