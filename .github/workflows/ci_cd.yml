@@ -87,6 +87,13 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
 
+    - name: Debug Helm directory
+      run: |
+        ls -la
+        find . -name "Chart.*" -o -name "chart.*"
+        ls -la ./helm || echo "Helm directory not found"
+        ls -la ./helm/devproject || echo "Devproject chart directory not found"
+
     - name: Get GKE credentials and deploy with Helm
       env:
         SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
@@ -100,7 +107,29 @@ jobs:
         
         gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
         
-        helm upgrade --install devproject ./helm/devproject \
-          --set image.repository=sillycatlover246/devproject \
-          --set image.tag=latest \
-          --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+        # Check if we have Chart.yml instead of Chart.yaml
+        if [ -f "./helm/devproject/Chart.yml" ] && [ ! -f "./helm/devproject/Chart.yaml" ]; then
+          cp "./helm/devproject/Chart.yml" "./helm/devproject/Chart.yaml"
+          echo "Copied Chart.yml to Chart.yaml"
+        fi
+        
+        # If helm directory exists
+        if [ -d "./helm/devproject" ]; then
+          helm upgrade --install devproject ./helm/devproject \
+            --set image.repository=sillycatlover246/devproject \
+            --set image.tag=latest \
+            --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+        else
+          # Try to find the correct path
+          CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
+          if [ -n "$CHART_DIR" ]; then
+            echo "Found Helm chart directory at: $CHART_DIR"
+            helm upgrade --install devproject $CHART_DIR \
+              --set image.repository=sillycatlover246/devproject \
+              --set image.tag=latest \
+              --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+          else
+            echo "ERROR: Could not find Helm chart directory"
+            exit 1
+          fi
+        fi
