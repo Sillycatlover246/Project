@@ -34,7 +34,7 @@ jobs:
 
   deploy_infrastructure:
     needs: build_and_push
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -42,12 +42,19 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform init & apply
+      - name: Terraform init, import, and apply
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           cd terraform
           terraform init -upgrade
+          
+          terraform state list google_container_cluster.primary || \
+            terraform import -input=false google_container_cluster.primary projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster || true
+          
+          terraform state list google_container_node_pool.primary_nodes || \
+            terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
+          
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
 
@@ -67,7 +74,7 @@ jobs:
         env:
           SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
         run: |
-          echo "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
+          printf '%s' "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
           gcloud auth activate-service-account --key-file=gcp.json
           gcloud components install gke-gcloud-auth-plugin --quiet
           gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
@@ -78,4 +85,3 @@ jobs:
             --set image.repository=sillycatlover246/devproject \
             --set image.tag=latest \
             --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
- 
