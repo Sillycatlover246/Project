@@ -1,6 +1,6 @@
 resource "google_container_cluster" "primary" {
   name                      = var.cluster_name
-  location                  = "us-central1-a"   
+  location                  = "us-central1-a"   # Zonal cluster in us-central1-a
   initial_node_count        = 1
   remove_default_node_pool  = true
   network                   = "default"
@@ -16,7 +16,8 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     machine_type = var.node_machine_type
-    disk_size_gb = 80     #
+    disk_size_gb = 80
+    image_type   = "COS_CONTAINERD"  # Specify an image type; alternatives: "COS" or "UBUNTU"
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
