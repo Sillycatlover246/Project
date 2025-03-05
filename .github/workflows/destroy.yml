@@ -21,4 +21,5 @@ jobs:
         run: |
           cd terraform
           terraform init -upgrade
-          terraform destroy -auto-approve
+          echo "Destroying infrastructure like a boss..."
+          terraform destroy -auto-approve -input=false
