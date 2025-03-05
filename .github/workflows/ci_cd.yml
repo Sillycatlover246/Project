@@ -29,8 +29,11 @@ jobs:
 
       - name: Build & push image
         run: |
-          docker build -t sillycatlover246/devproject:latest .
+          VERSION="v1.0-${{ github.run_number }}"
+          docker build -t sillycatlover246/devproject:$VERSION .
+          docker tag sillycatlover246/devproject:$VERSION sillycatlover246/devproject:latest
           docker push sillycatlover246/devproject:latest
+      
 
   deploy_infrastructure:
     needs: build_and_push

@@ -8,5 +8,5 @@ services:
 
     environment:
       - FLASK_SECRET_KEY
-      - DATABASE_URL
+      - DATABASE_URL # ignore this lmao
 
