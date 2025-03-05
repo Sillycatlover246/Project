@@ -59,60 +59,50 @@ jobs:
     needs: deploy_infrastructure
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Install Helm
-      uses: azure/setup-helm@v3
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-    - name: Set up gcloud
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: devproject-451919
-        install_components: 'kubectl'
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: devproject-451919
+          install_components: 'kubectl'
 
-    - name: Install GKE auth plugin
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y apt-transport-https ca-certificates gnupg
-        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+      - name: Install GKE auth plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
 
-    - name: Get GKE credentials and deploy with Helm
-      env:
-        SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
-      run: |
-        printf '%s' "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
-        gcloud auth activate-service-account --key-file=gcp.json
-        gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
-        
-        if [ -f "./helm/devproject/Chart.yml" ] && [ ! -f "./helm/devproject/Chart.yaml" ]; then
-          cp "./helm/devproject/Chart.yml" "./helm/devproject/Chart.yaml"
-          echo "Copied Chart.yml to Chart.yaml"
-        fi
+      - name: Get GKE credentials and deploy with Helm
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
+        run: |
+          printf '%s' "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
+          gcloud auth activate-service-account --key-file=gcp.json
+          gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
 
-        if [ -d "./helm/devproject" ]; then
-          helm upgrade --install devproject ./helm/devproject \
-            --set image.repository=sillycatlover246/devproject \
-            --set image.tag=latest \
-            --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
-            --set service.type=LoadBalancer \
-            --set service.port=5000 \
-            --set service.targetPort=5000
-        else
-          CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
-          if [ -n "$CHART_DIR" ]; then
-            echo "Found Helm chart directory at: $CHART_DIR"
-            helm upgrade --install devproject $CHART_DIR \
+          # Copy Chart.yml to Chart.yaml if necessary
+          if [ -f "./helm/devproject/Chart.yml" ] && [ ! -f "./helm/devproject/Chart.yaml" ]; then
+            cp "./helm/devproject/Chart.yml" "./helm/devproject/Chart.yaml"
+            echo "Copied Chart.yml to Chart.yaml"
+          fi
+
+          if [ -d "./helm/devproject" ]; then
+            helm upgrade --install devproject ./helm/devproject \
               --set image.repository=sillycatlover246/devproject \
               --set image.tag=latest \
               --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
@@ -120,8 +110,36 @@ jobs:
               --set service.port=5000 \
               --set service.targetPort=5000
           else
-            echo "ERROR: Could not find Helm chart directory"
-            exit 1
+            CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
+            if [ -n "$CHART_DIR" ]; then
+              echo "Found Helm chart directory at: $CHART_DIR"
+              helm upgrade --install devproject $CHART_DIR \
+                --set image.repository=sillycatlover246/devproject \
+                --set image.tag=latest \
+                --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
+                --set service.type=LoadBalancer \
+                --set service.port=5000 \
+                --set service.targetPort=5000
+            else
+              echo "ERROR: Could not find Helm chart directory"
+              exit 1
+            fi
           fi
-        fi
-        
+
+      - name: Display External IP
+        run: |
+          # Wait for external IP assignment (max 5 minutes, polling every 30 seconds)
+          external_ip=""
+          attempt=0
+          while [ -z "$external_ip" ] && [ $attempt -lt 10 ]; do
+            echo "Waiting for external IP assignment..."
+            sleep 30
+            external_ip=$(kubectl get svc devproject-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+            attempt=$((attempt+1))
+          done
+
+          if [ -z "$external_ip" ]; then
+            echo "External IP not assigned yet. Check your service in the GCP Console."
+          else
+            echo "Click here: http://$external_ip:5000"
+          fi
