@@ -21,12 +21,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
-        run: echo "No tests yet..."
+      - name: Run unit tests
+        run: echo "No unit tests yet..."
 
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
+      - name: Determine version tag
+        id: version
+        run: |
+          VERSION="v1.0-${{ github.run_number }}"
+          echo "::set-output name=version::$VERSION"
+      
       - name: Build & push image
         run: |
           VERSION="v1.0-${{ github.run_number }}"
@@ -35,7 +41,23 @@ jobs:
           docker tag sillycatlover246/devproject:$VERSION sillycatlover246/devproject:latest
           docker push sillycatlover246/devproject:$VERSION
           docker push sillycatlover246/devproject:latest
-      
+
+      - name: Run integration tests
+        run: |
+          VERSION="v1.0-${{ github.run_number }}"
+          echo "Running container from image tag: $VERSION for integration testing..."
+          CONTAINER_ID=$(docker run -d -p 5000:5000 sillycatlover246/devproject:$VERSION)
+          echo "Started container: $CONTAINER_ID"
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000)
+          echo "HTTP status code: $STATUS"
+          docker stop $CONTAINER_ID
+          docker rm $CONTAINER_ID
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Integration test failed. Expected HTTP 200, got $STATUS"
+            exit 1
+          fi
+
   deploy_infrastructure:
     needs: build_and_push
     runs-on: ubuntu-latest 
@@ -99,7 +121,6 @@ jobs:
           gcloud auth activate-service-account --key-file=gcp.json
           gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
 
-          # Copy Chart.yml to Chart.yaml if necessary
           if [ -f "./helm/devproject/Chart.yml" ] && [ ! -f "./helm/devproject/Chart.yaml" ]; then
             cp "./helm/devproject/Chart.yml" "./helm/devproject/Chart.yaml"
             echo "Copied Chart.yml to Chart.yaml"
@@ -132,7 +153,6 @@ jobs:
 
       - name: Display External IP
         run: |
-          # Wait for external IP assignment (max 5 minutes, polling every 30 seconds)
           external_ip=""
           attempt=0
           while [ -z "$external_ip" ] && [ $attempt -lt 10 ]; do
@@ -144,6 +164,15 @@ jobs:
 
           if [ -z "$external_ip" ]; then
             echo "External IP not assigned yet. Check your service in the GCP Console."
+            exit 1
           else
             echo "Click here: http://$external_ip:5000"
+          fi
+
+          echo "Running integration test against http://$external_ip:5000..."
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://$external_ip:5000)
+          echo "HTTP status code: $status"
+          if [ "$status" != "200" ]; then
+            echo "Integration test failed. Expected HTTP 200, got $status"
+            exit 1
           fi
