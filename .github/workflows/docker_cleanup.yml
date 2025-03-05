@@ -1,0 +1,50 @@
+name: Cleanup Docker Images
+
+on:
+  schedule:
+    # Run every 48 hours at midnight UTC
+    - cron: "0 0 */2 * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup old Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD_TOKEN: ${{ secrets.DOCKER_PASSWORD_TOKEN }}
+          REPO: "sillycatlover246/devproject"
+          RETAIN: 10
+        run: |
+          echo "Fetching tags for repository $REPO..."
+          # Get the list of tags (up to 100 tags)
+          TAGS_JSON=$(curl -s -u "$DOCKER_USERNAME:$DOCKER_PASSWORD_TOKEN" "https://hub.docker.com/v2/repositories/${REPO}/tags?page_size=100")
+          
+          TAGS=$(echo "$TAGS_JSON" | jq -r '.results[] | "\(.name) \(.last_updated)"' | sort -k2 -r)
+          echo "Tags with last updated times:"
+          echo "$TAGS"
+          
+          TAG_NAMES=$(echo "$TAGS" | awk '{print $1}')
+          echo "All tags:"
+          echo "$TAG_NAMES"
+          
+          # Count the tags
+          COUNT=$(echo "$TAG_NAMES" | wc -l | tr -d ' ')
+          echo "Total tags: $COUNT"
+          
+          if [ "$COUNT" -le "$RETAIN" ]; then
+            echo "No cleanup needed. Retaining all $COUNT tags."
+            exit 0
+          fi
+          
+          TAGS_TO_DELETE=$(echo "$TAG_NAMES" | tail -n +$(($RETAIN + 1)))
+          echo "Tags to delete:"
+          echo "$TAGS_TO_DELETE"
+          
+          for TAG in $TAGS_TO_DELETE; do
+            echo "Deleting tag: $TAG"
+            curl -s -u "$DOCKER_USERNAME:$DOCKER_PASSWORD_TOKEN" -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/"
+          done
+          
+          echo "Cleanup completed."
