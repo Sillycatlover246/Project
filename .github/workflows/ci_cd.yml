@@ -65,6 +65,11 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: validate terraform
+        run: |
+            cd terraform
+            terraform validate  
+
       - name: Terraform init, import, and apply
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
@@ -77,11 +82,6 @@ jobs:
             terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-
-      - name: validate terraform
-        run: |
-            cd terraform
-            terraform validate
 
   deploy_app:
     needs: deploy_infrastructure
@@ -115,44 +115,45 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
 
+      - name: Get GKE credentials
+        env:
+            SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
+        run: |
+            printf '%s' "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
+            gcloud auth activate-service-account --key-file=gcp.json
+            gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
+            kubectl get nodes
+        
       - name: Create Kubernetes secret for Flask
         run: |
-          kubectl create secret generic flask-secrets \
-          --from-literal=FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
-          --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Get GKE credentials and deploy with Helm
-        env:
-          SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}
+            kubectl create secret generic flask-secrets \
+              --from-literal=FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
+              --dry-run=client -o yaml | kubectl apply -f -
+        
+      - name: Deploy with Helm
         run: |
-          printf '%s' "$SERVICE_ACCOUNT_JSON" | base64 -d > gcp.json
-          gcloud auth activate-service-account --key-file=gcp.json
-          gcloud container clusters get-credentials devproject-cluster --zone=us-central1-a --project=devproject-451919
-
-          if [ -d "./helm/devproject" ]; then
-            helm upgrade --install devproject ./helm/devproject \
-              --set image.repository=sillycatlover246/devproject \
-              --set image.tag=latest \
-              --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
-              --set service.type=LoadBalancer \
-              --set service.port=5000 \
-              --set service.targetPort=5000
-          else
-            CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
-            if [ -n "$CHART_DIR" ]; then
-              echo "Found Helm chart directory at: $CHART_DIR"
-              helm upgrade --install devproject $CHART_DIR \
+            if [ -d "./helm/devproject" ]; then
+              helm upgrade --install devproject ./helm/devproject \
                 --set image.repository=sillycatlover246/devproject \
                 --set image.tag=latest \
-                --set env.FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }} \
                 --set service.type=LoadBalancer \
                 --set service.port=5000 \
                 --set service.targetPort=5000
             else
-              echo "ERROR: Could not find Helm chart directory"
-              exit 1
+              CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
+              if [ -n "$CHART_DIR" ]; then
+                echo "Found Helm chart directory at: $CHART_DIR"
+                helm upgrade --install devproject $CHART_DIR \
+                  --set image.repository=sillycatlover246/devproject \
+                  --set image.tag=latest \
+                  --set service.type=LoadBalancer \
+                  --set service.port=5000 \
+                  --set service.targetPort=5000
+              else
+                echo "ERROR: Could not find Helm chart directory"
+                exit 1
+              fi
             fi
-          fi
 
       - name: Display External IP
         run: |
