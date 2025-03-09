@@ -1,10 +1,15 @@
 resource "google_container_cluster" "primary" {
   name                      = var.cluster_name
-  location                  = "us-central1-a"   # Zonal cluster in us-central1-a
+  location                  = "us-central1-a"
   initial_node_count        = 1
   remove_default_node_pool  = true
   network                   = "default"
   subnetwork                = "default"
+  resource_labels = {    # just adding tags
+    envoirment = "dev"
+    project = "devproject"
+    managed-by = "terraform"
+  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -25,7 +30,6 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 
   lifecycle {
-    # Ignore any changes to node_config because GKE sets many computed defaults
     ignore_changes = [
       node_config,
     ]

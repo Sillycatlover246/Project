@@ -22,4 +22,26 @@ spec:
         - containerPort: 5000
         env:
         - name: FLASK_SECRET_KEY
-          value: {{ default "myHelmSecretKey" .Values.env.FLASK_SECRET_KEY | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: flask-secrets
+              key: FLASK_SECRET_KEY
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu | default "100m" }}
+            memory: {{ .Values.resources.limits.memory | default "128Mi" }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu | default "50m" }}
+            memory: {{ .Values.resources.requests.memory | default "64Mi" }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
