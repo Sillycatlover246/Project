@@ -135,7 +135,7 @@ jobs:
             if [ -d "./helm/devproject" ]; then
               helm upgrade --install devproject ./helm/devproject \
                 --set image.repository=sillycatlover246/devproject \
-                --set image.tag="v1.0-${{ github.run_number }}" \ 
+                --set image.tag=latest \ 
                 --set service.type=LoadBalancer \
                 --set service.port=5000 \
                 --set service.targetPort=5000
