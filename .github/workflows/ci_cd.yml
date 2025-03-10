@@ -135,7 +135,7 @@ jobs:
                     if [ -d "./helm/devproject" ]; then
                       helm upgrade --install devproject ./helm/devproject \
                         --set image.repository=sillycatlover246/devproject \
-                        --set image.tag=latest \
+                        --set image.tag=v1.0-${{ github.run_number }} \
                         --set service.type=LoadBalancer \
                         --set service.port=5000 \
                         --set service.targetPort=5000
@@ -145,7 +145,7 @@ jobs:
                         echo "Found Helm chart directory at: $CHART_DIR"
                         helm upgrade --install devproject $CHART_DIR \
                           --set image.repository=sillycatlover246/devproject \
-                          --set image.tag=latest \
+                          --set image.tag=v1.0-${{ github.run_number }} \
                           --set service.type=LoadBalancer \
                           --set service.port=5000 \
                           --set service.targetPort=5000
