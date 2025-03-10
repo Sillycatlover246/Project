@@ -132,28 +132,29 @@ jobs:
         
       - name: Deploy with Helm
         run: |
-            if [ -d "./helm/devproject" ]; then
-              helm upgrade --install devproject ./helm/devproject \
-                --set image.repository=sillycatlover246/devproject \
-                --set image.tag="v1.0-${{ github.run_number }}" \ 
-                --set service.type=LoadBalancer \
-                --set service.port=5000 \
-                --set service.targetPort=5000
-            else
-              CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
-              if [ -n "$CHART_DIR" ]; then
-                echo "Found Helm chart directory at: $CHART_DIR"
-                helm upgrade --install devproject $CHART_DIR \
-                  --set image.repository=sillycatlover246/devproject \
-                  --set image.tag=latest \
-                  --set service.type=LoadBalancer \
-                  --set service.port=5000 \
-                  --set service.targetPort=5000
-              else
-                echo "ERROR: Could not find Helm chart directory"
-                exit 1
-              fi
-            fi
+                    if [ -d "./helm/devproject" ]; then
+                      helm upgrade --install devproject ./helm/devproject \
+                        --set image.repository=sillycatlover246/devproject \
+                        --set image.tag=latest \
+                        --set service.type=LoadBalancer \
+                        --set service.port=5000 \
+                        --set service.targetPort=5000
+                    else
+                      CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
+                      if [ -n "$CHART_DIR" ]; then
+                        echo "Found Helm chart directory at: $CHART_DIR"
+                        helm upgrade --install devproject $CHART_DIR \
+                          --set image.repository=sillycatlover246/devproject \
+                          --set image.tag=latest \
+                          --set service.type=LoadBalancer \
+                          --set service.port=5000 \
+                          --set service.targetPort=5000
+                      else
+                        echo "ERROR: Could not find Helm chart directory"
+                        exit 1
+                      fi
+                    fi
+              
 
       - name: Display External IP
         run: |
