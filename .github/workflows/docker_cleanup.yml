@@ -2,7 +2,7 @@ name: Cleanup Docker Images
 
 on:
   schedule:
-    # this is 48 hours :sob:
+    # how is this 48 hours :sob:
     - cron: "0 0 */2 * *"
   workflow_dispatch:
 
@@ -42,9 +42,22 @@ jobs:
           echo "Tags to delete:"
           echo "$TAGS_TO_DELETE"
           
+          # Obtain a JWT token for authenticated API calls
+          TOKEN=$(curl -s -H "Content-Type: application/json" \
+            -X POST \
+            -d '{"username": "'"$DOCKER_USERNAME"'", "password": "'"$DOCKER_PASSWORD_TOKEN"'"}' \
+            https://hub.docker.com/v2/users/login/ | jq -r .token)
+          
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to obtain JWT token. Exiting."
+            exit 1
+          fi
+          
           for TAG in $TAGS_TO_DELETE; do
             echo "Deleting tag: $TAG"
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u "$DOCKER_USERNAME:$DOCKER_PASSWORD_TOKEN" -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/")
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: JWT $TOKEN" \
+              -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/")
             echo "Response for deleting tag $TAG: $RESPONSE"
             if [ "$RESPONSE" -ne 204 ]; then
               echo "Failed to delete tag $TAG (HTTP status: $RESPONSE)"
