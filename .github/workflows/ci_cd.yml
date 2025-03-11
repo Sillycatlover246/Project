@@ -13,14 +13,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
@@ -28,7 +20,7 @@ jobs:
         id: version
         run: |
           VERSION="v1.0-${{ github.run_number }}"
-          echo "::set-output name=version::$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       
       - name: Build & push image
         run: |
@@ -77,11 +69,6 @@ jobs:
             terraform import -input=false google_container_node_pool.primary_nodes projects/devproject-451919/zones/us-central1-a/clusters/devproject-cluster/nodePools/devproject-cluster-node-pool || true
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-
-      - name: validate terraform
-        run: |
-            cd terraform
-            terraform validate
 
   deploy_app:
     needs: deploy_infrastructure
@@ -132,29 +119,28 @@ jobs:
         
       - name: Deploy with Helm
         run: |
-                    if [ -d "./helm/devproject" ]; then
-                      helm upgrade --install devproject ./helm/devproject \
-                        --set image.repository=sillycatlover246/devproject \
-                        --set image.tag=v1.0-${{ github.run_number }} \
-                        --set service.type=LoadBalancer \
-                        --set service.port=5000 \
-                        --set service.targetPort=5000
-                    else
-                      CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
-                      if [ -n "$CHART_DIR" ]; then
-                        echo "Found Helm chart directory at: $CHART_DIR"
-                        helm upgrade --install devproject $CHART_DIR \
-                          --set image.repository=sillycatlover246/devproject \
-                          --set image.tag=v1.0-${{ github.run_number }} \
-                          --set service.type=LoadBalancer \
-                          --set service.port=5000 \
-                          --set service.targetPort=5000
-                      else
-                        echo "ERROR: Could not find Helm chart directory"
-                        exit 1
-                      fi
-                    fi
-              
+          if [ -d "./helm/devproject" ]; then
+            helm upgrade --install devproject ./helm/devproject \
+              --set image.repository=sillycatlover246/devproject \
+              --set image.tag=v1.0-${{ github.run_number }} \
+              --set service.type=LoadBalancer \
+              --set service.port=5000 \
+              --set service.targetPort=5000
+          else
+            CHART_DIR=$(find . -type d -name "devproject" | grep helm | head -n 1)
+            if [ -n "$CHART_DIR" ]; then
+              echo "Found Helm chart directory at: $CHART_DIR"
+              helm upgrade --install devproject $CHART_DIR \
+                --set image.repository=sillycatlover246/devproject \
+                --set image.tag=v1.0-${{ github.run_number }} \
+                --set service.type=LoadBalancer \
+                --set service.port=5000 \
+                --set service.targetPort=5000
+            else
+              echo "ERROR: Could not find Helm chart directory"
+              exit 1
+            fi
+          fi
 
       - name: Display External IP
         run: |
