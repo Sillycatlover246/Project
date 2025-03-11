@@ -6,7 +6,7 @@ metadata:
     app: {{ .Chart.Name }}
 spec:
   type: {{ .Values.service.type | default "ClusterIP" }}
-  loadBalancerIP: {{ .Values.service.loadBalancerIP | default "" }} # refer to values 😭😭😭😭😭😭😭😭
+  loadBalancerIP: {{ .Values.service.loadBalancerIP | default "" }} # this does NOT work :sob:
   selector:
     app: {{ .Chart.Name }}
   ports:

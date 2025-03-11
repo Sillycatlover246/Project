@@ -60,8 +60,8 @@ jobs:
               -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/")
             echo "Response for deleting tag $TAG: $RESPONSE"
             if [ "$RESPONSE" -ne 204 ]; then
-              echo "Failed to delete tag $TAG (HTTP status: $RESPONSE)"
+              echo "Womp womp. Failed to delete $TAG (HTTP status: $RESPONSE)"
             fi
           done
           
-          echo "Cleanup completed."
+          echo "Le epic cleanup"
