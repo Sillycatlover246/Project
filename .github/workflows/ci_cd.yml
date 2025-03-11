@@ -7,8 +7,10 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_and_push:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -24,16 +26,23 @@ jobs:
       
       - name: Build & push image
         run: |
-          VERSION="v1.0-${{ github.run_number }}"
+          VERSION="${{ steps.version.outputs.version }}"
           echo "Building image with tag: $VERSION"
           docker build -t sillycatlover246/devproject:$VERSION .
           docker tag sillycatlover246/devproject:$VERSION sillycatlover246/devproject:latest
           docker push sillycatlover246/devproject:$VERSION
           docker push sillycatlover246/devproject:latest
 
+  integration_tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
       - name: Run integration tests
         run: |
-          VERSION="v1.0-${{ github.run_number }}"
+          VERSION="${{ needs.build.outputs.version }}"
           echo "Running container from image tag: $VERSION for integration testing..."
           CONTAINER_ID=$(docker run -d -p 5000:5000 sillycatlover246/devproject:$VERSION)
           echo "Started container: $CONTAINER_ID"
@@ -48,7 +57,7 @@ jobs:
           fi
 
   deploy_infrastructure:
-    needs: build_and_push
+    needs: [build, integration_tests]
     runs-on: ubuntu-latest 
     steps:
       - name: Check out code
@@ -122,7 +131,7 @@ jobs:
           if [ -d "./helm/devproject" ]; then
             helm upgrade --install devproject ./helm/devproject \
               --set image.repository=sillycatlover246/devproject \
-              --set image.tag=v1.0-${{ github.run_number }} \
+              --set image.tag=${{ needs.build.outputs.version }} \
               --set service.type=LoadBalancer \
               --set service.port=5000 \
               --set service.targetPort=5000
@@ -132,7 +141,7 @@ jobs:
               echo "Found Helm chart directory at: $CHART_DIR"
               helm upgrade --install devproject $CHART_DIR \
                 --set image.repository=sillycatlover246/devproject \
-                --set image.tag=v1.0-${{ github.run_number }} \
+                --set image.tag=${{ needs.build.outputs.version }} \
                 --set service.type=LoadBalancer \
                 --set service.port=5000 \
                 --set service.targetPort=5000
@@ -142,7 +151,7 @@ jobs:
             fi
           fi
 
-      - name: Display External IP
+      - name: Display External IP and Run Integration Test
         run: |
           external_ip=""
           attempt=0
