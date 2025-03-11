@@ -2,7 +2,7 @@ name: Cleanup Docker Images
 
 on:
   schedule:
-    # Run every 48 hours at midnight UTC
+    # this is 48 hours :sob:
     - cron: "0 0 */2 * *"
   workflow_dispatch:
 
@@ -44,7 +44,11 @@ jobs:
           
           for TAG in $TAGS_TO_DELETE; do
             echo "Deleting tag: $TAG"
-            curl -s -u "$DOCKER_USERNAME:$DOCKER_PASSWORD_TOKEN" -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/"
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u "$DOCKER_USERNAME:$DOCKER_PASSWORD_TOKEN" -X DELETE "https://hub.docker.com/v2/repositories/${REPO}/tags/${TAG}/")
+            echo "Response for deleting tag $TAG: $RESPONSE"
+            if [ "$RESPONSE" -ne 204 ]; then
+              echo "Failed to delete tag $TAG (HTTP status: $RESPONSE)"
+            fi
           done
           
           echo "Cleanup completed."
